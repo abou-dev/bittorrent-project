@@ -6,9 +6,12 @@ project(
         'c_std=c99',
         'warning_level=2',
         'werror=true',
-        'debug=true'
+        'debug=true',
+        'c_args=-Wno-deprecated-declarations'
     ]
 )
+
+openssl_dep = dependency('openssl', required : true)
 
 inc = include_directories('include')
 
@@ -26,16 +29,13 @@ mbtbe = shared_library(
     'mbtbe',                   
     mbtbe_sources,             
     include_directories : inc, 
+    dependencies : [openssl_dep], # Link with OpenSSL
     install : true,            
     install_dir : meson.current_build_dir() 
 )
 
 mbtbe_dep = declare_dependency(
     link_with : mbtbe,
-    include_directories : inc
+    include_directories : inc,
+    dependencies : [openssl_dep] # Export OpenSSL dependency
 )
-
-
-
-	
-

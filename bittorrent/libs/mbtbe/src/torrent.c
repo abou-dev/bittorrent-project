@@ -1,36 +1,34 @@
 #include <mbt/be/bencode.h>
 #include <mbt/be/torrent_impl.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include <openssl/sha.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
-static void *xmalloc(size_t size) {
+static void *xmalloc(size_t size)
+{
     void *ptr = malloc(size);
-    if (!ptr) {
+    if (!ptr)
+    {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
     return ptr;
 }
 
-static void *xcalloc(size_t count, size_t size) {
+static void *xcalloc(size_t count, size_t size)
+{
     void *ptr = calloc(count, size);
-    if (!ptr) {
+    if (!ptr)
+    {
         perror("calloc");
         exit(EXIT_FAILURE);
     }
     return ptr;
 }
-
-
-	
-
-
 
 static struct mbt_torrent_file *mbt_torrent_file_init(struct mbt_be_node *node)
 {
@@ -107,10 +105,11 @@ void mbt_torrent_free(struct mbt_torrent *torrent)
     free(torrent);
 }
 
-bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent) {
-
+bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent)
+{
     FILE *file = fopen(path, "rb");
-    if (!file) {
+    if (!file)
+    {
         return false;
     }
 
@@ -119,7 +118,8 @@ bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent) {
     rewind(file);
 
     char *buffer = xmalloc(file_size);
-    if (!buffer) {
+    if (!buffer)
+    {
         fclose(file);
         return false;
     }
@@ -129,7 +129,8 @@ bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent) {
 
     struct mbt_cview view = MBT_CVIEW(buffer, file_size);
     struct mbt_be_node *root = mbt_be_decode(&view);
-    if (!root) {
+    if (!root)
+    {
         free(buffer);
         return false;
     }
@@ -137,10 +138,12 @@ bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent) {
     torrent->node = root;
 
     mbt_str_ctor(&torrent->announce, root->v.dict[0]->val->v.str.size);
-    mbt_str_pushcv(&torrent->announce, MBT_CVIEW_OF(root->v.dict[0]->val->v.str));
+    mbt_str_pushcv(&torrent->announce,
+                   MBT_CVIEW_OF(root->v.dict[0]->val->v.str));
 
     mbt_str_ctor(&torrent->created_by, root->v.dict[1]->val->v.str.size);
-    mbt_str_pushcv(&torrent->created_by, MBT_CVIEW_OF(root->v.dict[1]->val->v.str));
+    mbt_str_pushcv(&torrent->created_by,
+                   MBT_CVIEW_OF(root->v.dict[1]->val->v.str));
 
     torrent->creation_date = root->v.dict[2]->val->v.nb;
 
@@ -156,21 +159,21 @@ bool mbt_be_parse_torrent_file(const char *path, struct mbt_torrent *torrent) {
 
     struct mbt_be_node **file_list = root->v.dict[7]->val->v.list;
     size_t file_count = 0;
-    for (; file_list[file_count]; ++file_count) {}
+    for (; file_list[file_count]; ++file_count)
+    {
+    }
 
     torrent->files = xmalloc(file_count * sizeof(struct mbt_torrent_file *));
     torrent->files_size = file_count;
 
-    for (size_t i = 0; i < file_count; ++i) {
+    for (size_t i = 0; i < file_count; ++i)
+    {
         torrent->files[i] = mbt_torrent_file_init(file_list[i]);
     }
 
     free(buffer);
     return true;
 }
-
-
-
 
 static void compute_sha1(const char *data, size_t size, unsigned char *hash)
 {
@@ -180,9 +183,11 @@ static void compute_sha1(const char *data, size_t size, unsigned char *hash)
     SHA1_Final(hash, &ctx);
 }
 
-static struct mbt_str compute_pieces(const char *path, size_t piece_length) {
+static struct mbt_str compute_pieces(const char *path, size_t piece_length)
+{
     FILE *file = fopen(path, "rb");
-    if (!file) {
+    if (!file)
+    {
         struct mbt_str empty_str;
         mbt_str_ctor(&empty_str, 0);
         return empty_str;
@@ -195,7 +200,8 @@ static struct mbt_str compute_pieces(const char *path, size_t piece_length) {
     size_t bytes_read;
     unsigned char hash[SHA_DIGEST_LENGTH];
 
-    while ((bytes_read = fread(buffer, 1, piece_length, file)) > 0) {
+    while ((bytes_read = fread(buffer, 1, piece_length, file)) > 0)
+    {
         compute_sha1(buffer, bytes_read, hash);
         mbt_str_pushcv(&pieces, MBT_CVIEW((char *)hash, SHA_DIGEST_LENGTH));
     }
@@ -206,14 +212,8 @@ static struct mbt_str compute_pieces(const char *path, size_t piece_length) {
     return pieces;
 }
 
-
-	
-
-
-
 bool mbt_be_make_torrent_file(const char *path)
 {
-
     struct stat path_stat;
     if (stat(path, &path_stat) == -1)
     {

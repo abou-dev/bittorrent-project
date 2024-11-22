@@ -1,19 +1,21 @@
 #ifndef MBT_BE_TORRENT_IMPL_H
 #define MBT_BE_TORRENT_IMPL_H
 
-#include <mbt/be/torrent.h>
 #include <mbt/be/bencode.h>
+#include <mbt/be/torrent.h>
 #include <mbt/utils/str.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-struct mbt_torrent_file {
-    struct mbt_str *path;  
-    size_t path_size;      
-    size_t length;      
+struct mbt_torrent_file
+{
+    struct mbt_str *path;
+    size_t path_size;
+    size_t length;
 };
 
-struct mbt_torrent {
+struct mbt_torrent
+{
     struct mbt_str announce;
     struct mbt_str created_by;
     size_t creation_date;
@@ -26,9 +28,4 @@ struct mbt_torrent {
     struct mbt_be_node *node;
 };
 
-#endif // MBT_BE_TORRENT_IMPL_H
-
-
-
-	
-
+#endif /* !MBT_BE_TORRENT_IMPL_H */
