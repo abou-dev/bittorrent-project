@@ -1,5 +1,3 @@
-# libs/mbtfile/meson.build
-
 project('mbtfile', 'c')
 
 mbtfile_sources = [

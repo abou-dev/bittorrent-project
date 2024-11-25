@@ -90,13 +90,11 @@ enum mbt_piece_status mbt_piece_check(struct mbt_file_handler *fh,
         return MBT_PIECE_INVALID;
     struct mbt_piece *p = &fh->pieces[piece_index];
 
-    // Vérifier si tous les blocs ont été reçus
     for (size_t i = 0; i < p->nb_blocks; i++) {
         if (!p->received_blocks[i])
             return MBT_PIECE_DOWNLOADING;
     }
 
-    // Tous les blocs reçus, vérifier le hash
     if (mbt_compare_hashes(fh, piece_index, p->data))
         return MBT_PIECE_VALID;
     else
@@ -117,15 +115,12 @@ bool mbt_piece_write(struct mbt_file_handler *fh, size_t piece_index)
         struct mbt_file_info file_info;
         mbt_torrent_get_file_info(fh->torrent, i, &file_info);
         if (piece_offset < cumulative_size + file_info.length) {
-            // La pièce appartient à ce fichier
             size_t file_offset = piece_offset - cumulative_size;
 
-            // Déterminer la taille à écrire
             size_t write_size = p->size;
             if (file_offset + write_size > file_info.length)
                 write_size = file_info.length - file_offset;
 
-            // Ouvrir le fichier
             int fd = open(file_info.path.data, O_WRONLY | O_CREAT, 0644);
             if (fd == -1) {
                 perror("open failed");
