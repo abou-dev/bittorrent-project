@@ -9,8 +9,6 @@ mbtfile_inc = include_directories('include')
 
 mbtfile_dep = [
     dependency('openssl'),
-    dependency('mbtutils'),
-    # Ajoutez d'autres dépendances si nécessaire
 ]
 
 mbtfile_lib = library(
