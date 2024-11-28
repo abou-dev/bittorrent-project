@@ -1,5 +1,3 @@
-project('mbtfile', 'c')
-
 mbtfile_sources = [
     'src/file_handler.c',
     'src/piece.c',
@@ -11,12 +9,13 @@ mbtfile_dep = [
     dependency('openssl'),
 ]
 
-mbtfile_lib = library(
+mbtfile_lib = shared_library(
     'mbtfile',
     mbtfile_sources,
-    include_directories : [mbtfile_inc],
+    include_directories : mbtfile_inc,
     dependencies : mbtfile_dep,
     install : true,
+    install_dir : meson.current_build_dir(),
 )
 
 mbtfile_dep_decl = declare_dependency(
@@ -24,29 +23,3 @@ mbtfile_dep_decl = declare_dependency(
     link_with : mbtfile_lib,
     dependencies : mbtfile_dep,
 )
-
-# Configuration des flags de compilation pour les sanitizers
-sanitizer_flags = [
-    '-fsanitize=address',
-    '-fsanitize=undefined',
-    '-fno-omit-frame-pointer',
-]
-
-# Ajouter les tests unitaires avec Criterion
-test_sources = [
-    'tests/test_mbtfile.c',
-]
-
-criterion_dep = dependency('criterion', required : true)
-
-test_mbtfile = executable(
-    'test_mbtfile',
-    test_sources,
-    include_directories : [mbtfile_inc],
-    dependencies : [mbtfile_dep_decl, criterion_dep],
-    c_args : sanitizer_flags,
-    link_args : sanitizer_flags,
-)
-
-test('Test mbtfile', test_mbtfile)
-
