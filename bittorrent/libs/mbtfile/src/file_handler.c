@@ -1,37 +1,40 @@
 #include "mbt/file/file_handler.h"
 
-#include <errno.h>
-#include <fcntl.h>
 #include <mbt/be/torrent.h>
+#include <mbt/be/torrent_getters.h>
 #include <mbt/utils/str.h>
-#include <openssl/sha.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "mbt/file/piece.h"
+
+struct mbt_piece
+{
+    size_t size;
+    char *data;
+    size_t nb_blocks;
+    bool *received_blocks;
+};
 
 struct mbt_file_handler
 {
     struct mbt_torrent *torrent;
     struct mbt_piece *pieces;
     size_t nb_pieces;
-    const char *pieces_hash;
+    struct mbt_cview pieces_hash; // Hash des pièces
 };
 
 struct mbt_file_handler *mbt_file_handler_init(struct mbt_torrent *torrent)
 {
-    if (torrent == NULL)
-        return NULL;
-
     struct mbt_file_handler *fh = malloc(sizeof(struct mbt_file_handler));
     if (fh == NULL)
         return NULL;
 
     fh->torrent = torrent;
 
-    fh->nb_pieces = mbt_torrent_get_nb_pieces(torrent);
+    fh->pieces_hash = mbt_torrent_pieces(fh->torrent);
+    fh->nb_pieces = fh->pieces_hash.size / 20; // 20 octets par hash SHA1
 
     fh->pieces = malloc(sizeof(struct mbt_piece) * fh->nb_pieces);
     if (fh->pieces == NULL)
@@ -41,10 +44,8 @@ struct mbt_file_handler *mbt_file_handler_init(struct mbt_torrent *torrent)
     }
     memset(fh->pieces, 0, sizeof(struct mbt_piece) * fh->nb_pieces);
 
-    fh->pieces_hash = mbt_torrent_get_pieces_hash(torrent);
-
-    size_t total_size = mbt_torrent_get_total_length(torrent);
-    size_t piece_length = mbt_torrent_get_piece_length(torrent);
+    size_t total_size = mbt_torrent_length(fh->torrent);
+    size_t piece_length = mbt_torrent_piece_length(fh->torrent);
 
     for (size_t i = 0; i < fh->nb_pieces; i++)
     {
@@ -104,35 +105,25 @@ void mbt_file_handler_free(struct mbt_file_handler *fh)
 
 size_t mbt_file_handler_get_nb_pieces(struct mbt_file_handler *fh)
 {
-    if (fh == NULL)
-        return 0;
     return fh->nb_pieces;
 }
 
 struct mbt_cview mbt_file_handler_get_name(struct mbt_file_handler *fh)
 {
-    if (fh == NULL)
-        return (struct mbt_cview){ NULL, 0 };
-    return mbt_torrent_get_name(fh->torrent);
+    return mbt_torrent_name(fh->torrent);
 }
 
 size_t mbt_file_handler_get_nb_files(struct mbt_file_handler *fh)
 {
-    if (fh == NULL)
-        return 0;
-    return mbt_torrent_get_nb_files(fh->torrent);
+    return mbt_torrent_files_size(fh->torrent);
 }
 
 size_t mbt_file_handler_get_total_size(struct mbt_file_handler *fh)
 {
-    if (fh == NULL)
-        return 0;
-    return mbt_torrent_get_total_length(fh->torrent);
+    return mbt_torrent_length(fh->torrent);
 }
 
 const char *mbt_file_handler_get_pieces_hash(struct mbt_file_handler *fh)
 {
-    if (fh == NULL)
-        return NULL;
-    return fh->pieces_hash;
+    return fh->pieces_hash.data;
 }
